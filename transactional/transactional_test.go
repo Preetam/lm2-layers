@@ -50,13 +50,13 @@ func verifySquares(cur *lm2.Cursor) error {
 
 	prev := 0
 	for _, n := range ints {
-		//log.Println(n)
 		if prev == 0 {
 			prev = n
 			continue
 		}
 		if n != prev*prev {
-			return fmt.Errorf("not a square: %v, %v", ints, pairs)
+			return fmt.Errorf("not a square (%d != %d * %d == %d): %v, %v",
+				n, prev, prev, prev*prev, ints, pairs)
 		}
 		prev = n
 	}
@@ -83,7 +83,7 @@ func TestTransactionalSquares(t *testing.T) {
 	}
 
 	const count = 100
-	const parallelism = 24
+	const parallelism = 4
 
 	txCol := NewCollection(col)
 
@@ -93,7 +93,7 @@ func TestTransactionalSquares(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < count; j++ {
-				err = txCol.View(verifySquares)
+				err := txCol.View(verifySquares)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -106,7 +106,7 @@ func TestTransactionalSquares(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < count; j++ {
-				err = txCol.Update(func(cur *lm2.Cursor, wb *lm2.WriteBatch) error {
+				err := txCol.Update(func(cur *lm2.Cursor, wb *lm2.WriteBatch) error {
 					setSquares(wb)
 					return nil
 				})
